@@ -49,7 +49,7 @@
 #define RC_ARM 4 // if using ELRS this channel should always be your arming channel
 
 // TODO rename to match aux channels function if desired
-#define RC_AUX1 5 // rename if you want channels to have mode names
+#define RC_TRANSITION 5 // rename if you want channels to have mode names
 #define RC_AUX2 6 // rename if you want channels to have mode names
 #define RC_AUX3 7 // rename if you want channels to have mode names
 #define RC_AUX4 8 // rename if you want channels to have mode names
