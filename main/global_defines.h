@@ -90,13 +90,13 @@ float acc_bias[AXIS_COUNT] = {
 
 // TODO rename to match servo function, IE SERVO_FRONT_LEFT
 // pin 0
-#define SERVO_0 0 // rename to match what the servo does
+#define SERVO_FR 0 // rename to match what the servo does
 // pin 1
-#define SERVO_1 1 // rename to match what the servo does
+#define SERVO_FL 1 // rename to match what the servo does
 // pin 5
-#define SERVO_2 2 // rename to match what the servo does
+#define SERVO_BL 2 // rename to match what the servo does
 // pin 6
-#define SERVO_3 3 // rename to match what the servo does
+#define SERVO_BR 3 // rename to match what the servo does
 // pin 10
 #define SERVO_4 4 // rename to match what the servo does
 // pin 11

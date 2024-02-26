@@ -312,6 +312,7 @@ void loop() {
 
   // Actuator mixing and scaling to PWM values
   // Mixes PID outputs and motor/servo commands -- custom mixing assignments done here
+  
   controlMixer(
     rc_channels, // input used for flight modes and rc passthrough
     pidSums, // input PID output used for stabilization
@@ -389,10 +390,10 @@ void controlMixer(float rc_channels[], float pidSums[], float motor_commands[], 
   
   // TODO mix inputs to servo commands
   // servos need to be scaled to work properly with the servo scaling that was set earlier
-  servo_commands[SERVO_0] = 0.0f;
-  servo_commands[SERVO_1] = 0.0f;
-  servo_commands[SERVO_2] = 0.0f;
-  servo_commands[SERVO_3] = 0.0f;
+  servo_commands[SERVO_FR] = rc_channels[RC_PITCH] * 90.0f;
+  servo_commands[SERVO_FL] = rc_channels[RC_PITCH] * 90.0f;
+  servo_commands[SERVO_BL] = rc_channels[RC_PITCH] * 90.0f;
+  servo_commands[SERVO_BR] = rc_channels[RC_PITCH] * 90.0f;
   servo_commands[SERVO_4] = 0.0f;
   servo_commands[SERVO_5] = 0.0f;
   servo_commands[SERVO_6] = 0.0f;
