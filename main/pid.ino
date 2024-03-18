@@ -38,6 +38,7 @@ void attitudePidInit(attitudePid_t *pid) {
   pid->kp = 275.0f;
   pid->kd = 1.0f;
 
+
   pid->previous_error_or_measurement[0] = 0.0f;
   pid->previous_error_or_measurement[1] = 0.0f;
   pid->previous_error_or_measurement[2] = 0.0f;
@@ -59,13 +60,13 @@ void attitudePidApply(attitudePid_t *pid, float setpoint_angles[], float gravity
     float error = error_array[axis];
 
     // TODO calculate Pterm which is a scaler of error
-    float pterm = pid->kp * 0.0;
+    float pterm = pid->kp * error;
     
     // TODO calculate Dterm which is the derivative of error (faster) or the negative derivative of gyro (smoother) times a scaler
-    float derivative = 0.0f;
+    float derivative = error * LOOPRATE;
     // only keep one previous_error_or_measurement, remove the one you are not using
     pid->previous_error_or_measurement[axis] = gravity_vector[axis];
-    pid->previous_error_or_measurement[axis] = error;
+    // pid->previous_error_or_measurement[axis] = error;
 
     float dterm = pid->kd * derivative;
 
@@ -199,22 +200,22 @@ void updatePids(
 void ratePidApply(ratePid_t *pid, float setpoint[], float gyro[], float pidSums[]) {
   for (int axis = 0; axis < AXIS_COUNT; axis++) {
     // TODO calculate error
-    float error = 0.0f;
+    float error = setpoint - gyro;
 
     // TODO calculate Pterm which is a scaler of error
-    float pterm = pid->kp[axis] * 0.0f;
+    float pterm = pid->kp[axis] * error;
 
     // TODO calculate Iterm which is the integral of error times a scaler
-    pid->integral[axis] += pid->ki[axis] * 0.0f;
+    pid->integral[axis] += pid->ki[axis] * (error * DT);
 
     pid->integral[axis] = constrain(pid->integral[axis], -pid->max_iterm_windup, pid->max_iterm_windup);
     float iterm = pid->integral[axis];
 
     // TODO calculate Dterm which is the derivative of error (faster) or the negative derivative of gyro (smoother) times a scaler
-    float derivative = 0.0f;
+    float derivative = -(error - pid->previous_error_or_measurement[axis])* LOOPRATE;
     // only keep one previous_error_or_measurement, remove the one you are not using
     pid->previous_error_or_measurement[axis] = gyro[axis];
-    pid->previous_error_or_measurement[axis] = error;
+    // pid->previous_error_or_measurement[axis] = error;
 
     derivative = pt2FilterApply(&pid->dterm_lowpass[axis], derivative); // filter the dterm, helps with noise
     float dterm = pid->kd[axis] * derivative;
