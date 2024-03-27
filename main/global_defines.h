@@ -56,8 +56,7 @@
 #define RC_AUX5 9 // rename if you want channels to have mode names
 #define RC_AUX6 10 // rename if you want channels to have mode names
 #define RC_AUX7 11 // rename if you want channels to have mode names
-
-
+ 
 //=======================================================IMU SETUP========================================================//
 
 typedef enum {
@@ -116,9 +115,9 @@ float acc_bias[AXIS_COUNT] = {
 #define POLE_COUNT 12 // the number of magnets in the motor, must be accurate to get accurate RPM data
 
 // TODO rename to match motor function, IE MOTOR_FRONT_LEFT
-#define MOTOR_FL 0 // rename to match where the motor is or its function
-#define MOTOR_BL 1 // rename to match where the motor is or its function
-#define MOTOR_FR 2 // rename to match where the motor is or its function
+#define MOTOR_BL 0 // rename to match where the motor is or its function
+#define MOTOR_FR 1 // rename to match where the motor is or its function
+#define MOTOR_FL 2 // rename to match where the motor is or its function
 #define MOTOR_BR 3 // rename to match where the motor is or its function
 #define MOTOR_4 4 // rename to match where the motor is or its function
 #define MOTOR_5 5 // rename to match where the motor is or its function

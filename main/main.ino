@@ -264,7 +264,7 @@ void loop() {
     pitch_kp,
     pitch_ki,
     pitch_kd,
-    pitch_kff,
+    pitch_kff, 
     yaw_kp,
     yaw_ki,
     yaw_kd,
@@ -383,17 +383,17 @@ void controlMixer(float rc_channels[], float pidSums[], float motor_commands[], 
 
   // TODO mix inputs to motor commands
   // motor commands should be between 0 and 1
-  motor_commands[MOTOR_FL] = 0.0f;
-  motor_commands[MOTOR_BL] = 0.0f;
-  motor_commands[MOTOR_FR] = 0.0f;
-  motor_commands[MOTOR_BR] = 0.0f;
+  motor_commands[MOTOR_FL] = throttle -  pidSums[AXIS_PITCH] - pidSums[AXIS_YAW] * 0.2f + pidSums[AXIS_ROLL];
+  motor_commands[MOTOR_BL] = throttle +  pidSums[AXIS_PITCH] - pidSums[AXIS_YAW] * 0.2f + pidSums[AXIS_ROLL];
+  motor_commands[MOTOR_FR] = throttle -  pidSums[AXIS_PITCH] + pidSums[AXIS_YAW] * 0.2f - pidSums[AXIS_ROLL];
+  motor_commands[MOTOR_BR] = throttle + pidSums[AXIS_PITCH] + pidSums[AXIS_YAW] * 0.2f - pidSums[AXIS_ROLL];
   
   // TODO mix inputs to servo commands
   // servos need to be scaled to work properly with the servo scaling that was set earlier
-  servo_commands[SERVO_FR] = rc_channels[RC_PITCH] * 90.0f;
-  servo_commands[SERVO_FL] = rc_channels[RC_PITCH] * 90.0f;
-  servo_commands[SERVO_BL] = rc_channels[RC_PITCH] * 90.0f;
-  servo_commands[SERVO_BR] = rc_channels[RC_PITCH] * 90.0f;
+  servo_commands[SERVO_FR] = pidSums[AXIS_YAW] * 40.0f -90.0f; //- pidSums[AXIS_YAW] * 90.0f;
+  servo_commands[SERVO_FL] = -pidSums[AXIS_YAW] * 40.0f -90.0f; //+ pidSums[AXIS_YAW] * 90.0f;
+  servo_commands[SERVO_BL] = -pidSums[AXIS_YAW] * 40.0f -90.0f; //- pidSums[AXIS_YAW] *90.0f;
+  servo_commands[SERVO_BR] = pidSums[AXIS_YAW] * 40.0f -90.0f; //+ pidSums[AXIS_YAW] * 90.0f;
   servo_commands[SERVO_4] = 0.0f;
   servo_commands[SERVO_5] = 0.0f;
   servo_commands[SERVO_6] = 0.0f;

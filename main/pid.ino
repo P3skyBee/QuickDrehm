@@ -63,7 +63,7 @@ void attitudePidApply(attitudePid_t *pid, float setpoint_angles[], float gravity
     float pterm = pid->kp * error;
     
     // TODO calculate Dterm which is the derivative of error (faster) or the negative derivative of gyro (smoother) times a scaler
-    float derivative = error * LOOPRATE;
+    float derivative = -(gravity_vector[axis] - pid->previous_error_or_measurement[axis])* LOOPRATE;
     // only keep one previous_error_or_measurement, remove the one you are not using
     pid->previous_error_or_measurement[axis] = gravity_vector[axis];
     // pid->previous_error_or_measurement[axis] = error;
@@ -200,7 +200,7 @@ void updatePids(
 void ratePidApply(ratePid_t *pid, float setpoint[], float gyro[], float pidSums[]) {
   for (int axis = 0; axis < AXIS_COUNT; axis++) {
     // TODO calculate error
-    float error = setpoint - gyro;
+    float error = setpoint[axis] - gyro[axis];
 
     // TODO calculate Pterm which is a scaler of error
     float pterm = pid->kp[axis] * error;
@@ -212,7 +212,7 @@ void ratePidApply(ratePid_t *pid, float setpoint[], float gyro[], float pidSums[
     float iterm = pid->integral[axis];
 
     // TODO calculate Dterm which is the derivative of error (faster) or the negative derivative of gyro (smoother) times a scaler
-    float derivative = -(error - pid->previous_error_or_measurement[axis])* LOOPRATE;
+    float derivative = -(gyro[axis] - pid->previous_error_or_measurement[axis])* LOOPRATE;
     // only keep one previous_error_or_measurement, remove the one you are not using
     pid->previous_error_or_measurement[axis] = gyro[axis];
     // pid->previous_error_or_measurement[axis] = error;
