@@ -50,7 +50,7 @@
 
 // TODO rename to match aux channels function if desired
 #define RC_MODE 5 // rename if you want channels to have mode names
-#define RC_AUX2 6 // rename if you want channels to have mode names
+#define RC_TRANSITION 6 // rename if you want channels to have mode names
 #define RC_AUX3 7 // rename if you want channels to have mode names
 #define RC_AUX4 8 // rename if you want channels to have mode names
 #define RC_AUX5 9 // rename if you want channels to have mode names

@@ -41,6 +41,7 @@ ratePid_t ratePid;
 gyroFilters_t gyroFilters;
 accFilters_t accFilters;
 rcFilters_t rcFilters;
+slewFilter_t transitionSlew;
 
 // All the code that is only run once
 void setup() {
@@ -48,6 +49,8 @@ void setup() {
   delay(500);
   
   initMotors();
+
+  slewFilterInit(&transitionSlew, 0.75f, DT);
 
   // Initilize the rcScalers
   initRcScalers(rcScalers);
@@ -81,8 +84,8 @@ void setup() {
   // Initialize radio communication
   radioSetup();
 
-  //  delay(1000); // Add extra delay so that we can get a radio connection first. Increase value if things aren't working.
-  //  findRcChannelLimits(RC_ARM); // RC limits printed to serial monitor. Paste these in radio.ino, then comment this out forever.
+  // delay(1000); // Add extra delay so that we can get a radio connection first. Increase value if things aren't working.
+  // findRcChannelLimits(RC_ARM); // RC limits printed to serial monitor. Paste these in radio.ino, then comment this out forever.
 
   // Initialize IMU communication
   IMUinit();
@@ -151,6 +154,7 @@ void loop() {
     attitude_euler, gravity_vector // Will be updated with attitude data
   );
 
+  
 //=============================================GET RC DATA AND APPLY FILTERS===============================================//
 
   // Get rc commands
@@ -185,6 +189,9 @@ void loop() {
 
   // will only filter the first 4 channels and not switch channels
   rcFiltersApply(&rcFilters, rc_channels);
+
+  rcFiltersApply(&rcFilters, rc_channels);
+  float transition_amount = slewFilterApply(&transitionSlew, rc_channels[RC_TRANSITION]);
 
 //===============================================CREATE SETPOINTS FOR PID CONTROLLER===================================================//
 
@@ -238,24 +245,26 @@ void loop() {
 
 //=========================================================PID CONTROLLERS=========================================================//
 
+
 // TODO enable and finish the below code when getting ready for transition flights
-/*
+
   // update pid values based on flight mode
-  float roll_kp = ???;
-  float roll_ki = ???;
-  float roll_kd = ???;
-  float roll_kff = ???;
+  float roll_kp = applyTransition(65.0f, 22.0f);
+  float roll_ki = applyTransition(60.0f, 20.0f);
+  float roll_kd = applyTransition(40.0f, 13.0f);
+  float roll_kff = applyTransition(0.0f, 4.0f);
 
-  float pitch_kp = ???;
-  float pitch_ki = ???;
-  float pitch_kd = ???;
-  float pitch_kff = ???;
+  float pitch_kp = applyTransition(65.0f, 22.0f);
+  float pitch_ki = applyTransition(60.0f, 20.0f);
+  float pitch_kd = applyTransition(45.0f, 15.0f);
+  float pitch_kff = applyTransition(0.0f, 4.0f);
 
-  float yaw_kp = ???;
-  float yaw_ki = ???;
-  float yaw_kd = ???;
-  float yaw_kff = ???;
-  updatePids(
+  float yaw_kp = applyTransition(65.0f, 22.0f);
+  float yaw_ki = applyTransition(60.0f, 20.0f);
+  float yaw_kd = applyTransition(5.0f, 2.0f);
+  float yaw_kff = applyTransition(0.0f, 4.0f);
+
+  updatePids( 
     &ratePid,
     roll_kp,
     roll_ki,
@@ -270,7 +279,7 @@ void loop() {
     yaw_kd,
     yaw_kff
   );
-*/
+
   float pidSums[AXIS_COUNT] = {0.0f, 0.0f, 0.0f}; // will be used in the mixer
   if (rc_channels[RC_MODE] > 0.55) { // lets call aux1 angle mode for now, you can rename it later
 
@@ -383,24 +392,47 @@ void controlMixer(float rc_channels[], float pidSums[], float motor_commands[], 
   // Positive pitch = pitch down
   // Positive yaw = yaw left
 
-  // TODO mix inputs to motor commands
-  // motor commands should be between 0 and 1
-  motor_commands[MOTOR_FL] = throttle -  pidSums[AXIS_PITCH] - pidSums[AXIS_YAW] * 0.2f + pidSums[AXIS_ROLL];
-  motor_commands[MOTOR_BL] = throttle +  pidSums[AXIS_PITCH] - pidSums[AXIS_YAW] * 0.2f + pidSums[AXIS_ROLL];
-  motor_commands[MOTOR_FR] = throttle -  pidSums[AXIS_PITCH] + pidSums[AXIS_YAW] * 0.2f - pidSums[AXIS_ROLL];
-  motor_commands[MOTOR_BR] = throttle + pidSums[AXIS_PITCH] + pidSums[AXIS_YAW] * 0.2f - pidSums[AXIS_ROLL];
+  //MULTI ROTOR VALUES
+
+  //MOTORS
+  float mr_fl_m = throttle -  pidSums[AXIS_PITCH] - pidSums[AXIS_YAW] * 0.2f + pidSums[AXIS_ROLL];
+  float mr_bl_m = throttle +  pidSums[AXIS_PITCH] - pidSums[AXIS_YAW] * 0.2f + pidSums[AXIS_ROLL];
+  float mr_fr_m = throttle -  pidSums[AXIS_PITCH] + pidSums[AXIS_YAW] * 0.2f - pidSums[AXIS_ROLL];
+  float mr_br_m = throttle + pidSums[AXIS_PITCH] + pidSums[AXIS_YAW] * 0.2f - pidSums[AXIS_ROLL];
   
-  // TODO mix inputs to servo commands
-  // servos need to be scaled to work properly with the servo scaling that was set earlier
-  servo_commands[SERVO_FR] = pidSums[AXIS_YAW] * 40.0f -90.0f; //- pidSums[AXIS_YAW] * 90.0f;
-  servo_commands[SERVO_FL] = -pidSums[AXIS_YAW] * 40.0f -90.0f; //+ pidSums[AXIS_YAW] * 90.0f;
-  servo_commands[SERVO_BL] = -pidSums[AXIS_YAW] * 40.0f -90.0f; //- pidSums[AXIS_YAW] *90.0f;
-  servo_commands[SERVO_BR] = pidSums[AXIS_YAW] * 40.0f -90.0f; //+ pidSums[AXIS_YAW] * 90.0f;
-  servo_commands[SERVO_4] = 0.0f;
-  servo_commands[SERVO_5] = 0.0f;
-  servo_commands[SERVO_6] = 0.0f;
-  servo_commands[SERVO_7] = 0.0f;
-  servo_commands[SERVO_8] = 0.0f;
+  //SERVOS
+  float mr_fr_s = pidSums[AXIS_YAW] * 40.0f -90.0f; 
+  float mr_fl_s = -pidSums[AXIS_YAW] * 40.0f -90.0f; 
+  float mr_bl_s = -pidSums[AXIS_YAW] * 40.0f -90.0f; 
+  float mr_br_s = pidSums[AXIS_YAW] * 40.0f -90.0f; 
+
+
+  //FIXED WING VALUES
+
+  //MOTORS
+  float fw_fl_m = throttle - pidSums[AXIS_YAW] * 0.2f;
+  float fw_bl_m = throttle - pidSums[AXIS_YAW] * 0.2f;
+  float fw_fr_m = throttle + pidSums[AXIS_YAW] * 0.2f;
+  float fw_br_m = throttle + pidSums[AXIS_YAW] * 0.2f;
+  
+  //SERVOS
+  float fw_fr_s = pidSums[AXIS_PITCH] * 150.0f + pidSums[AXIS_ROLL] * 150.0f; 
+  float fw_fl_s = pidSums[AXIS_PITCH] * 150.0f - pidSums[AXIS_ROLL] * 150.0f; 
+  float fw_bl_s = -pidSums[AXIS_PITCH] * 150.0f - pidSums[AXIS_ROLL] * 150.0f; 
+  float fw_br_s = -pidSums[AXIS_PITCH] * 150.0f + pidSums[AXIS_ROLL] * 150.0f; 
+
+
+
+  motor_commands[MOTOR_FL] = applyTransition(mr_fl_m, fw_fl_m);
+  motor_commands[MOTOR_BL] = applyTransition(mr_bl_m, fw_bl_m);
+  motor_commands[MOTOR_FR] = applyTransition(mr_fr_m, fw_fr_m);
+  motor_commands[MOTOR_BR] = applyTransition(mr_br_m, fw_br_m);
+  
+
+  servo_commands[SERVO_FR] = applyTransition(mr_fr_s, fw_fr_s);
+  servo_commands[SERVO_FL] = applyTransition(mr_fl_s, fw_fl_s);
+  servo_commands[SERVO_BL] = applyTransition(mr_bl_s, fw_bl_s);
+  servo_commands[SERVO_BR] = applyTransition(mr_br_s, fw_br_s);
 }
 
 // DESCRIPTION: Arming occurs when arm switch is switched from low to high twice in the span of a second.
@@ -467,4 +499,9 @@ bool motorCutStatus(float throttle) {
   } else {
     return false;
   }
+}
+// first value is the multirotor value, second is the fixed wing value
+float applyTransition(float multirotor_value, float fixed_wing_value) {
+    float transition = transitionSlew.state;
+    return fixed_wing_value * transition + (1.0f - transition) * multirotor_value;
 }
